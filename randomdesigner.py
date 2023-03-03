@@ -14,7 +14,7 @@ from PyQt6.QtNetwork import QNetworkRequest, QNetworkAccessManager
 import pickle
 from PyQt6 import uic
 from PyQt6.QtWidgets import QPushButton, QHBoxLayout, QLabel, QWidget, QListWidgetItem, QGroupBox, QListWidget, QDialog, \
-    QMainWindow
+    QMainWindow, QVBoxLayout
 
 showFavAnime = ""
 
@@ -30,7 +30,7 @@ class Window(QDialog):
         self.centralwidgetHorizontalLayout = QHBoxLayout(self)
 
         self.Frame = QGroupBox()
-        self.FrameHorizontalLayout = QHBoxLayout(self.Frame)
+        self.FrameHorizontalLayout = QVBoxLayout(self.Frame)
 
         self.ListWidget = QListWidget(self.Frame)
         self.ListWidget.setSpacing(11)
@@ -45,15 +45,29 @@ class Window(QDialog):
             "QListWidget::item:hover {"
                 "border-color: black;"
             "}")
+        self.clearbutton = QtWidgets.QPushButton(self)
+        self.clearbutton.setGeometry(QtCore.QRect(50, 100, 0, 469))
+        self.clearbutton.setText("Очистить")
+        self.clearbutton.clicked.connect(self.clear)
 
         self.FrameHorizontalLayout.addWidget(self.ListWidget)
+        self.FrameHorizontalLayout.addWidget(self.clearbutton)
         self.centralwidgetHorizontalLayout.addWidget(self.Frame)
+
+
         self.showFavourite()
 
 
     def clicked(self):
         sender = self.sender()
         self.showFavouriteinWindow(sender.objectName())
+
+
+    def clear(self):
+        with open('favourite.txt', 'wb') as f:
+            pass
+        f.close()
+        self.ListWidget.clear()
 
     def showFavouriteinWindow(self, currentAnime):
         info = currentAnime.split()
@@ -62,6 +76,8 @@ class Window(QDialog):
         for item in info:
             try:
                 int(item)
+                if len(item) <4:
+                    raise
                 year += item
                 break
             except:
@@ -72,20 +88,20 @@ class Window(QDialog):
         for anime in self.father.favouriteS:
 
             if anime['title'] == title and anime['year'] == int(year):
-                print(anime)
+
                 self.father.label_title.setText(anime['title'])
                 self.father.label_year.setText(str(anime['year']))
                 self.father.label_genre.setText(
                     str(anime['material_data']['all_genres'][0:3]).replace("[", "").replace("]", "").replace("'",""))
                 self.father.label_count.setText(str(anime['material_data']['episodes_total']))
                 self.father.label_va.setText(anime['translate'])
+                self.father.label_story.setText(anime['material_data']['description'])
 
-                # urlImg = anime['poster']
-                # self.father.senderFavor.get(QNetworkRequest(QUrl(urlImg)))
+                urlImg = anime['material_data']["poster_url"]
+                self.father.senderFavor.get(QNetworkRequest(QUrl(urlImg)))
                 self.close()
 
     def showFavourite(self):
-
         with open('favourite.txt', 'rb') as h:
             try:
                 self.favouriteS = pickle.loads(h.read())
@@ -115,13 +131,18 @@ class Window(QDialog):
 
 class Ui_MainWindow(QMainWindow):
     def setupUi(self, MainWindow):
-        uic.loadUi('SUPERrandomanime.ui', self)
+        uic.loadUi('SUPER2randomanime.ui', self)
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(858, 509)
         MainWindow.setWindowTitle("RandomAnime")
+        f = open('favourite.txt', 'a')
+        f.close()
         self.Dialogue = Window(self)
 
+
         self.poster.setScaledContents(True)
+        self.label_title.setWordWrap(True)
+        self.label_va.setWordWrap(True)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -175,22 +196,8 @@ class Ui_MainWindow(QMainWindow):
         self.gridLayout_6.setObjectName("gridLayout_6")
         self.listWidget = QtWidgets.QListWidget(self.frame_6)
         self.listWidget.setObjectName("listWidget")
-        self.gridLayout_6.addWidget(self.listWidget, 1, 0, 1, 1)
-        self.programTitle_3 = QtWidgets.QLabel(self.tab_2)
-        self.programTitle_3.setGeometry(QtCore.QRect(390, 0, 361, 71))
-        font = QtGui.QFont()
-        font.setFamily("Consolas")
-        font.setPointSize(48)
-        font.setBold(False)
-        self.programTitle_3.setFont(font)
-        self.programTitle_3.setStyleSheet("color: rgb(170, 0, 0);")
-        self.programTitle_3.setObjectName("programTitle_3")
-        self.poster_3 = QtWidgets.QLabel(self.tab_2)
-        self.poster_3.setGeometry(QtCore.QRect(400, 90, 281, 301))
-        self.poster_3.setText("")
-        self.poster_3.setAlignment(QtCore.Qt.Alignment.AlignCenter)
-        self.poster_3.setObjectName("film_image_3")
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+
 
 
         self.findbutton.clicked.connect(self.functions)
@@ -205,8 +212,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.favouriteS = []
         self.lastanime = {}
-        f = open('favourite.txt', 'a')
-        f.close()
+
         with open('favourite.txt', 'rb') as h:
             try:
                 self.favouriteS = pickle.loads(h.read())
@@ -215,13 +221,14 @@ class Ui_MainWindow(QMainWindow):
 
             except EOFError:
                 self.favouriteS = []
+
+
     def newWin(self):
         self.Dialogue.exec()
 
 
     def functions(self):
         global showFavAnime
-        print(showFavAnime)
         url = 'https://anime777.ru/api/rand'
         response = requests.get(url)
         choise = {"genre": self.genre.currentText(),
@@ -232,7 +239,7 @@ class Ui_MainWindow(QMainWindow):
             response = requests.get(url, params=choise)
             json = response.json()
         except:
-            print("kjhg")
+            pass
 
         try:
             self.label_title.setText(response.json()['title'])
@@ -240,6 +247,7 @@ class Ui_MainWindow(QMainWindow):
             self.label_va.setText(response.json()['translate'])
             self.label_count.setText(str(response.json()['material_data']['episodes_total']))
             self.label_genre.setText(str(response.json()['material_data']['all_genres'][0:3]).replace("[", "").replace("]", "").replace("'",""))
+            self.label_story.setText(response.json()['material_data']['description'])
 
             urlImg = str(response.json()['material_data']["poster_url"])
             self.sender.get(QNetworkRequest(QUrl(urlImg)))
@@ -266,8 +274,23 @@ class Ui_MainWindow(QMainWindow):
                     self.favouriteS.append(self.lastanime)
                     pickle.dump(self.favouriteS, f)
                 self.listWidget.addItem(self.lastanime['title'] + ' ' + str(self.lastanime['year']) + ' ' + str(self.lastanime['material_data']['all_genres'][0:3]).replace("[", "").replace("]", ""))
+                item = QListWidgetItem()
+                item_widget = QWidget()
+                line_text = QLabel(
+                    self.lastanime['title'] + ' ' + str(self.lastanime['year']) + ' ' + str(self.lastanime['material_data']['all_genres'][0:3]).replace(
+                        "[", "").replace("]", "").replace("'", ""))
+                line_push_button = QPushButton("Показать")
+                line_push_button.setFixedSize(100, 30)
+                line_push_button.clicked.connect(self.Dialogue.clicked)
 
-
+                line_push_button.setObjectName(line_text.text())
+                item_layout = QHBoxLayout()
+                item_layout.addWidget(line_text)
+                item_layout.addWidget(line_push_button)
+                item_widget.setLayout(item_layout)
+                item.setSizeHint(item_widget.sizeHint())
+                self.Dialogue.ListWidget.addItem(item)
+                self.Dialogue.ListWidget.setItemWidget(item, item_widget)
 
 if __name__ == "__main__":
     import sys
