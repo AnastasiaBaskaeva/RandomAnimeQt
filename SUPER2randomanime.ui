@@ -282,7 +282,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Количество серий</string>
+        <string/>
        </property>
        <property name="placeholderText">
         <string>Количество серий</string>
@@ -354,7 +354,7 @@
    <widget class="QPushButton" name="addbutton">
     <property name="geometry">
      <rect>
-      <x>670</x>
+      <x>640</x>
       <y>430</y>
       <width>31</width>
       <height>31</height>
@@ -513,7 +513,7 @@
    <widget class="QPushButton" name="gotofavouriteButton">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>680</x>
       <y>430</y>
       <width>131</width>
       <height>31</height>
